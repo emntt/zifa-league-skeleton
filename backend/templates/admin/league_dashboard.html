@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>ZIFA League Dashboard</h1>
+<ul>
+  <li>Total Teams: {{ team_count }}</li>
+  <li>Total Players: {{ player_count }}</li>
+  <li>Total Matches: {{ match_count }}</li>
+  <li>Total Injuries: {{ injury_count }}</li>
+  <li>Total Transfers: {{ transfer_count }}</li>
+</ul>
+
+<h2>Goals per Team (Top 10)</h2>
+<canvas id="goalsTeamChart" width="800" height="300"></canvas>
+<h2>Standings (Top 10)</h2>
+<canvas id="standingsChart" width="800" height="300"></canvas>
+<h2>Discipline Cards per Month</h2>
+<canvas id="cardsMonthChart" width="800" height="300"></canvas>
+<h2>Transfers per Month</h2>
+<canvas id="transfersMonthChart" width="800" height="300"></canvas>
+<h2>Injuries per Team (Top 10)</h2>
+<canvas id="injuriesTeamChart" width="800" height="300"></canvas>
+<h2>Matches per Venue (Top 10)</h2>
+<canvas id="matchesVenueChart" width="800" height="300"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById('goalsTeamChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ goals_per_team_labels|safe }},
+        datasets: [{
+            label: 'Goals',
+            data: {{ goals_per_team_values|safe }},
+            backgroundColor: 'rgba(75,192,192,0.4)'
+        }]
+    }
+});
+new Chart(document.getElementById('standingsChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ standings_labels|safe }},
+        datasets: [{
+            label: 'Points',
+            data: {{ standings_values|safe }},
+            backgroundColor: 'rgba(153,102,255,0.4)'
+        }]
+    }
+});
+const cardsData = {{ cards_per_month_data|safe }};
+const cardMonths = [...new Set(cardsData.map(d => d.month ? d.month.substring(0,7) : "Unknown"))];
+const cardTypes = [...new Set(cardsData.map(d => d.type))];
+const cardDatasets = cardTypes.map(t => ({
+    label: t,
+    data: cardMonths.map(m => {
+      const found = cardsData.find(d => (d.month && d.month.substring(0,7) == m && d.type == t));
+      return found ? found.count : 0;
+    }),
+    backgroundColor: t == 'red_card' ? 'rgba(255,0,0,0.5)' : 'rgba(255,255,0,0.5)'
+}));
+new Chart(document.getElementById('cardsMonthChart'), {
+    type: 'bar',
+    data: {
+        labels: cardMonths,
+        datasets: cardDatasets
+    }
+});
+new Chart(document.getElementById('transfersMonthChart'), {
+    type: 'line',
+    data: {
+        labels: {{ transfers_months|safe }},
+        datasets: [{
+            label: 'Transfers',
+            data: {{ transfers_counts|safe }},
+            borderColor: 'rgba(54,162,235,1)',
+            fill: false
+        }]
+    }
+});
+new Chart(document.getElementById('injuriesTeamChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ injuries_team_labels|safe }},
+        datasets: [{
+            label: 'Injuries',
+            data: {{ injuries_team_values|safe }},
+            backgroundColor: 'rgba(255,99,132,0.5)'
+        }]
+    }
+});
+new Chart(document.getElementById('matchesVenueChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ matches_venue_labels|safe }},
+        datasets: [{
+            label: 'Matches',
+            data: {{ matches_venue_counts|safe }},
+            backgroundColor: 'rgba(54,162,235,0.5)'
+        }]
+    }
+});
+</script>
+{% endblock %}
